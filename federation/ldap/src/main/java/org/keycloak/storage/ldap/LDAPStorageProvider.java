@@ -538,11 +538,14 @@ public class LDAPStorageProvider implements UserStorageProvider,
 
     protected LDAPObject queryByEmail(RealmModel realm, String email) {
         try (LDAPQuery ldapQuery = LDAPUtils.createQueryForUserSearch(this, realm)) {
+
             LDAPQueryConditionsBuilder conditionsBuilder = new LDAPQueryConditionsBuilder();
 
             // Mapper should replace "email" in parameter name with correct LDAP mapped attribute
             Condition emailCondition = conditionsBuilder.equal(UserModel.EMAIL, email, EscapeStrategy.DEFAULT);
-            ldapQuery.addWhereCondition(emailCondition);
+            Condition secondaryEmailCondition = conditionsBuilder.equal("secondaryEmail", email, EscapeStrategy.DEFAULT);
+            Condition finalEmailCondition = conditionsBuilder.orCondition(emailCondition, secondaryEmailCondition);
+            ldapQuery.addWhereCondition(finalEmailCondition);
 
             return ldapQuery.getFirstResult();
         }
